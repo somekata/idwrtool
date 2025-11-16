@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>IDWR 発生動向ツール（Entry）</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        background: #f5f7fa;
+        margin: 0;
+        padding: 0;
+        color: #222;
+      }
+      header {
+        background: #2563eb;
+        color: #fff;
+        padding: 1.2rem 1.6rem;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 1.4rem;
+      }
+      main {
+        max-width: 900px;
+        margin: 1.5rem auto;
+        padding: 0 1rem;
+      }
+      .card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 1.2rem 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      .card h2 {
+        margin-top: 0;
+        font-size: 1.2rem;
+        border-left: 4px solid #2563eb;
+        padding-left: 0.5rem;
+      }
+      a.button {
+        display: inline-block;
+        background: #2563eb;
+        padding: 0.5rem 1rem;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        margin-top: 0.5rem;
+        font-size: 0.95rem;
+      }
+      a.button:hover {
+        background: #1d4ed8;
+      }
+      .note {
+        font-size: 0.85rem;
+        color: #555;
+        margin-top: 0.3rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>IDWR 感染症発生動向ツール</h1>
+      <p>weekly / yearly データ可視化 Viewer & Manager（準備中）</p>
+    </header>
+
+    <main>
+      <!-- Viewer -->
+      <section class="card">
+        <h2>Viewer（発生動向の可視化）</h2>
+        <p>
+          weekly または yearly の IDWR
+          データを読み込み、年別・週別・タンデム比較が可能です。
+        </p>
+        <a class="button" href="viewer/index.html">▶ Viewer を開く</a>
+        <div class="note">
+          機能：週別比較 / 年比較 / タンデム表示 / モーダルグラフ / HTML出力
+        </div>
+        <a
+          class="button"
+          style="margin-top: 0.7rem; background: #10b981"
+          href="docs/viewer_guide.html"
+          >📘 Viewer ガイドを見る</a
+        >
+        <!-- ▼ サンプルデータダウンロード（追加） ▼ -->
+        <div style="margin-top: 0.8rem">
+          <a
+            class="button"
+            style="background: #6b7280"
+            href="data/samples/yearly_data.csv"
+            download
+          >
+            📂 サンプルデータ（yearly_data.csv）をダウンロード
+          </a>
+          <p class="note">
+            ※ まだ一部のみ掲載中。現在コンテンツを増やしているところです。
+          </p>
+        </div>
+      </section>
+
+      <!-- Manager -->
+      <section class="card">
+        <h2>Manager（データ管理）</h2>
+        <p>CSV の登録・管理・整形などを予定しています。</p>
+        <p class="note">※ 現在準備中。後日アップデートで公開予定。</p>
+      </section>
+
+      <!-- About -->
+      <section class="card">
+        <h2>このツールについて</h2>
+        <p>
+          IDWR の公開データをもとに、感染症の発生動向を簡単に可視化するための
+          Web ツールです。
+        </p>
+        <ul>
+          <li>週別・年別・連結（タンデム）グラフ</li>
+          <li>HTMLとしてのグラフ出力</li>
+          <li>ローカルで完結（データ送信なし）</li>
+        </ul>
+      </section>
+      <!-- Official source -->
+      <section class="card">
+        <h2>公式情報（IDWR）</h2>
+        <p>
+          このツールは、厚生労働省 感染症発生動向調査 IDWR
+          の公開情報を利用して作成しています。<br />
+          公式データはこちら：
+        </p>
+        <a
+          class="button"
+          href="https://id-info.jihs.go.jp/surveillance/idwr/index.html"
+          target="_blank"
+        >
+          ▶ IDWR（感染症発生動向調査）公式サイト
+        </a>
+        <p class="note">
+          ※
+          本ツールは研究・教育目的のために作成したもので、厚生労働省とは直接関係ありません。
+        </p>
+      </section>
+
+      <!-- Credit -->
+      <section class="card">
+        <h2>開発に関して（Credit）</h2>
+        <p>
+          このツールは、公開データをもとに設計され、生成AI（ChatGPT）を活用して開発しています。<br />
+          データ処理・可視化はすべてローカル内で行われ、外部に送信されることはありません。
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

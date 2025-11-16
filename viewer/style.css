@@ -1,0 +1,179 @@
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f4f4f9;
+  color: #222;
+}
+
+header {
+  background: #1e3a8a;
+  color: #fff;
+  padding: 1rem 1.5rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.subtitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+main {
+  max-width: 960px;
+  margin: 1rem auto;
+  padding: 0 1rem 2rem;
+}
+
+.panel {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 1.05rem;
+  border-left: 4px solid #2563eb;
+  padding-left: 0.5rem;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.form-label {
+  font-size: 0.9rem;
+  margin-right: 0.3rem;
+  font-weight: 600;
+}
+
+.small {
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+label {
+  font-size: 0.9rem;
+}
+
+.note {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+input[type="number"],
+select {
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  min-width: 140px;
+}
+
+select[multiple] {
+  min-width: 260px;
+}
+
+button {
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+#fileInfo {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.summary {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: #111827;
+  line-height: 1.4;
+}
+
+.summary strong {
+  font-weight: 600;
+}
+
+.message {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: #b91c1c;
+}
+
+/* ===== モーダル関連 ===== */
+
+.modal {
+  display: none; /* JSで block に切り替え */
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 1rem 1.2rem 1rem;
+  max-width: 900px;
+  width: 95%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  position: relative;
+  font-size: 1rem;       /* ← 全体の文字サイズUP */
+  color: #000;           /* ← 真っ黒に */  
+}
+
+.modal-close {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.6rem;
+  border: none;
+  background: transparent;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: #4b5563;
+}
+
+.modal-close:hover {
+  color: #111827;
+}
+
+#modalTitle {
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+  font-size: 1.5rem;     /* ← タイトル少し大きく */
+  color: #000;           /* ← 真っ黒に */  
+}
+
+.modal-footer {
+  margin-top: 0.6rem;
+  text-align: right;
+}
+
+.modal-footer button {
+  font-size: 0.85rem;
+}

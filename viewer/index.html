@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>IDWR Viewer v0.3（weekly/yearly 対応）</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="script.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>IDWR 全数 Viewer v0.3</h1>
+      <p class="subtitle">
+        weekly / yearly データを選択して、感染症発生動向を可視化します
+      </p>
+    </header>
+
+    <main>
+      <!-- 1. データ種別 + 読み込み -->
+      <section class="panel">
+        <h2>1. データ種別と読み込み</h2>
+
+        <!-- データ種別 -->
+        <div class="form-row">
+          <span class="form-label">データの種類：</span>
+          <label>
+            <input
+              type="radio"
+              name="dtype"
+              value="weekly"
+              checked
+            />週別（weekly）
+          </label>
+          <label>
+            <input type="radio" name="dtype" value="yearly" />年別（yearly）
+          </label>
+        </div>
+
+        <p class="small">
+          weekly: <code>year, week, disease, prefecture, cases</code><br />
+          yearly: <code>year, disease, prefecture, cases</code>
+        </p>
+
+        <input type="file" id="csvFileInput" accept=".csv" />
+        <div id="fileInfo"></div>
+        <div id="dataSummary" class="summary"></div>
+      </section>
+
+      <!-- 2. 条件設定 -->
+      <section class="panel">
+        <h2>2. 条件設定</h2>
+
+        <!-- 比較モード（weekly のときだけ有効） -->
+        <div class="form-row">
+          <span class="form-label">比較モード：</span>
+          <label>
+            <input
+              type="radio"
+              name="mode"
+              value="byDisease"
+              checked
+            />同一年で複数感染症を比較
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="mode"
+              value="byYear"
+            />同一感染症で複数年を比較
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="mode"
+              value="tandem"
+            />同一感染症で複数年を連結
+          </label>
+          <span class="note">(yearly のときは無効)</span>
+        </div>
+
+        <!-- 感染症選択 -->
+        <div class="form-row">
+          <label for="diseaseSelect">感染症（複数選択可）：</label>
+          <select id="diseaseSelect" multiple size="6" disabled>
+            <option value="">CSV 読み込み後に有効</option>
+          </select>
+        </div>
+
+        <!-- 年選択（モード / 種別で使い分け） -->
+        <div class="form-row">
+          <label for="yearSingle">年（同一年で感染症比較）：</label>
+          <select id="yearSingle" disabled>
+            <option value="">CSV 読み込み後に有効</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="yearMulti">年（複数年比較・yearly用）：</label>
+          <select id="yearMulti" multiple size="5" disabled>
+            <option value="">CSV 読み込み後に有効</option>
+          </select>
+        </div>
+
+        <button id="drawBtn" disabled>グラフを描画（モーダル表示）</button>
+        <div id="message" class="message"></div>
+      </section>
+
+      <!-- 3. グラフ（モーダルで表示） -->
+      <section class="panel">
+        <h2>3. グラフ表示</h2>
+        <p class="small">
+          「グラフを描画」ボタンを押すと、モーダルウィンドウでグラフが表示されます。<br />
+          モーダル内から、このグラフを HTML ファイルとしてダウンロードできます。
+        </p>
+      </section>
+    </main>
+
+    <!-- ▼ グラフ表示用モーダル ▼ -->
+    <div id="chartModal" class="modal" aria-hidden="true">
+      <div class="modal-content">
+        <button class="modal-close" id="modalCloseBtn" aria-label="閉じる">
+          ×
+        </button>
+        <h2 id="modalTitle">グラフ</h2>
+        <canvas id="weeklyChart" width="700" height="360"></canvas>
+        <div class="modal-footer">
+          <button id="downloadHtmlBtn">
+            このグラフを HTML ファイルとしてダウンロード
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
