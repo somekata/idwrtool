@@ -6,35 +6,49 @@ let datasetType = "weekly"; // "weekly" or "yearly"
 let currentChartTitle = "";
 
 document.addEventListener("DOMContentLoaded", () => {
-  const modeRadios = document.querySelectorAll('input[name="mode"]');
-  modeRadios.forEach(r => r.addEventListener("change", handleModeChange));
-
-  const dtypeRadios = document.querySelectorAll('input[name="dtype"]');
-  dtypeRadios.forEach(r =>
-    r.addEventListener("change", handleDatasetTypeChange)
-  );
-
   const fileInput = document.getElementById("csvFileInput");
   const drawBtn = document.getElementById("drawBtn");
   const modalCloseBtn = document.getElementById("modalCloseBtn");
   const modal = document.getElementById("chartModal");
   const downloadHtmlBtn = document.getElementById("downloadHtmlBtn");
 
+  // 外部CSV読み込み
   fileInput.addEventListener("change", handleFileSelect);
-  drawBtn.addEventListener("click", () => {
-    drawChart();
+
+  // ★ここを追加
+  drawBtn.addEventListener("click", drawChart);  
+
+  // モーダル閉じる
+  modalCloseBtn.addEventListener("click", () => {
+    modal.style.display = "none";
   });
 
-  modalCloseBtn.addEventListener("click", closeModal);
-  modal.addEventListener("click", e => {
-    if (e.target === modal) {
-      closeModal();
-    }
-  });
-
+  // グラフHTML保存
   downloadHtmlBtn.addEventListener("click", downloadChartAsHtml);
 
-  // 初期のUI状態
+  // データ種類（yearly/weekly）の切替
+  const dtypeRadios = document.querySelectorAll('input[name="dtype"]');
+  dtypeRadios.forEach((radio) => {
+    radio.addEventListener("change", handleDatasetTypeChange);
+  });
+
+  // 🌟 サンプルボタン
+  const btnSampleDisease = document.getElementById("btnSampleDisease");
+  const btnSamplePathogen = document.getElementById("btnSamplePathogen");
+
+  if (btnSampleDisease) {
+    btnSampleDisease.addEventListener("click", () => {
+      loadSampleCsv("../data/samples/yearly_disease.csv", "yearly_disease.csv");
+    });
+  }
+
+  if (btnSamplePathogen) {
+    btnSamplePathogen.addEventListener("click", () => {
+      loadSampleCsv("../data/samples/yearly_pathogen.csv", "yearly_pathogen.csv");
+    });
+  }
+
+  // 初期UI（yearly をデフォルト反映）
   handleDatasetTypeChange();
 });
 
@@ -78,6 +92,7 @@ function handleModeChange() {
 }
 
 // CSV ファイル読み込み
+// 外部CSV読み込み（ファイル選択）
 function handleFileSelect(event) {
   const file = event.target.files[0];
   const info = document.getElementById("fileInfo");
@@ -86,41 +101,122 @@ function handleFileSelect(event) {
 
   if (!file) {
     info.textContent = "ファイルが選択されていません。";
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    const text = e.target.result;
+
+    // サンプル読み込みと共通の処理
+    handleCsvText(text, file.name);
+  };
+
+  reader.onerror = () => {
+    info.textContent = "ファイル読込時にエラーが発生しました。";
     allRows = [];
+    drawBtn.disabled = true;
+  };
+
+  reader.readAsText(file, "utf-8");
+}
+
+// CSVテキストを共通処理で読み込む
+function handleCsvText(text, label) {
+  const info = document.getElementById("fileInfo");
+  const summary = document.getElementById("dataSummary");
+  const drawBtn = document.getElementById("drawBtn");
+
+  allRows = parseCSV(text);
+
+  if (allRows.length <= 1) {
+    info.textContent = "データ行がありません。";
     drawBtn.disabled = true;
     summary.textContent = "";
     return;
   }
 
-  const reader = new FileReader();
-  reader.onload = e => {
-    const text = e.target.result;
-    allRows = parseCSV(text);
+  // ヘッダの正規化（BOM除去 & pathogen→disease）
+  const header = allRows[0];
+  if (header && header.length > 0) {
+    // 先頭セルのBOMを除去
+    header[0] = String(header[0]).replace(/^\uFEFF/, "");
 
-    if (allRows.length <= 1) {
-      info.textContent = "データ行がありません。";
-      drawBtn.disabled = true;
-      summary.textContent = "";
-      return;
+    const pathogenIdx = header.indexOf("pathogen");
+    if (pathogenIdx !== -1 && header.indexOf("disease") === -1) {
+      header[pathogenIdx] = "disease";
     }
+  }
 
+  if (label) {
+    info.textContent = `読み込み成功：${label}（${allRows.length - 1} 行）`;
+  } else {
     info.textContent = `読み込み成功：${allRows.length - 1} 行`;
-    drawBtn.disabled = false;
+  }
 
-    analyzeData(); // 利用可能な年・疾患を抽出してUIに反映
-  };
-  reader.onerror = () => {
-    info.textContent = "ファイルの読み込みに失敗しました。";
-    allRows = [];
-    drawBtn.disabled = true;
-  };
-  reader.readAsText(file, "utf-8");
+  drawBtn.disabled = false;
+  analyzeData(); // 利用可能な年・疾患を抽出してUIに反映
 }
 
 // 簡易CSVパース（カンマ区切りのみ想定）
+// クオート対応の簡易CSVパーサ
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
-  return lines.map(line => line.split(","));
+  const rows = lines.map(line => {
+    const result = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        inQuotes = !inQuotes; // " でON/OFF
+      } else if (ch === "," && !inQuotes) {
+        result.push(current);
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+    result.push(current);
+    return result;
+  });
+
+  // 先頭セルにBOMがついている場合（\uFEFFyear など）を除去
+  if (rows.length && rows[0].length) {
+    rows[0][0] = rows[0][0].replace(/^\uFEFF/, "");
+  }
+
+  return rows;
+}
+
+// サンプルCSVの読み込み（fetch）
+function loadSampleCsv(url, label) {
+  const info = document.getElementById("fileInfo");
+  const summary = document.getElementById("dataSummary");
+  const drawBtn = document.getElementById("drawBtn");
+
+  info.textContent = `サンプル読込中… (${label})`;
+  summary.textContent = "";
+  drawBtn.disabled = true;
+
+  fetch(url)
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      return res.text();
+    })
+    .then(text => {
+      handleCsvText(text, label);
+    })
+    .catch(err => {
+      console.error(err);
+      info.textContent = `サンプルの読み込みに失敗しました：${label}`;
+      allRows = [];
+      drawBtn.disabled = true;
+    });
 }
 
 // 利用可能な年・疾患を抽出して、選択肢とサマリーに反映

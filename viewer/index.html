@@ -29,12 +29,12 @@
             <input
               type="radio"
               name="dtype"
-              value="weekly"
+              value="yearly"
               checked
-            />週別（weekly）
+            />年別（yearly）
           </label>
           <label>
-            <input type="radio" name="dtype" value="yearly" />年別（yearly）
+            <input type="radio" name="dtype" value="weekly" />週別（weekly）
           </label>
         </div>
 
@@ -44,6 +44,18 @@
         </p>
 
         <input type="file" id="csvFileInput" accept=".csv" />
+
+        <!-- サンプルCSV読み込みボタン -->
+        <div class="sample-buttons">
+          <span class="form-label">サンプルデータ：</span>
+          <button type="button" id="btnSampleDisease">
+            年別：感染症別サンプル
+          </button>
+          <button type="button" id="btnSamplePathogen">
+            年別：病原体別サンプル
+          </button>
+        </div>
+
         <div id="fileInfo"></div>
         <div id="dataSummary" class="summary"></div>
       </section>

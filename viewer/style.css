@@ -177,3 +177,15 @@ button:disabled {
 .modal-footer button {
   font-size: 0.85rem;
 }
+
+.sample-buttons {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.sample-buttons .form-label {
+  font-weight: 600;
+}
