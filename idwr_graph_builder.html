@@ -310,18 +310,20 @@ footer.site-footer p{margin:0 0 4px;}
       <summary>⑤ 軸・グリッド設定</summary>
       <div class="panel-body">
         <div class="field-row"><label>X軸を表示</label><div class="ctl"><input type="checkbox" id="showXAxis" checked></div></div>
-        <div class="field-row"><label>X軸 色</label><div class="ctl"><input type="color" id="xAxisColor" value="#6b6558"></div></div>
-        <div class="field-row"><label>X軸 太さ</label><div class="ctl"><input type="number" id="xAxisWidth" min="0.5" max="5" step="0.5" value="1"></div></div>
+        <div class="field-row"><label>X軸 色</label><div class="ctl"><input type="color" id="xAxisColor" value="#000000"></div></div>
+        <div class="field-row"><label>X軸 太さ</label><div class="ctl"><input type="number" id="xAxisWidth" min="0.5" max="5" step="0.5" value="2"></div></div>
         <div class="field-row"><label>Y軸を表示</label><div class="ctl"><input type="checkbox" id="showYAxis" checked></div></div>
-        <div class="field-row"><label>Y軸 色</label><div class="ctl"><input type="color" id="yAxisColor" value="#6b6558"></div></div>
-        <div class="field-row"><label>Y軸 太さ</label><div class="ctl"><input type="number" id="yAxisWidth" min="0.5" max="5" step="0.5" value="1"></div></div>
-        <div class="field-row"><label>グリッド線を表示</label><div class="ctl"><input type="checkbox" id="showGrid" checked></div></div>
+        <div class="field-row"><label>Y軸 色</label><div class="ctl"><input type="color" id="yAxisColor" value="#000000"></div></div>
+        <div class="field-row"><label>Y軸 太さ</label><div class="ctl"><input type="number" id="yAxisWidth" min="0.5" max="5" step="0.5" value="2"></div></div>
+        <div class="field-row"><label>グリッド線（縦方向・X軸区切り）</label><div class="ctl"><input type="checkbox" id="showGridX" checked></div></div>
+        <div class="field-row"><label>グリッド線（横方向・Y軸目盛）</label><div class="ctl"><input type="checkbox" id="showGridY" checked></div></div>
         <div class="field-row"><label>グリッド線 色</label><div class="ctl"><input type="color" id="gridColor" value="#e2dac2"></div></div>
         <div class="field-row"><label>Y軸 最小値：自動</label><div class="ctl"><input type="checkbox" id="yMinAuto" checked></div></div>
         <div class="field-row"><label>　最小値を指定</label><div class="ctl"><input type="number" id="yMinManual" value="0" step="0.1" disabled></div></div>
         <div class="field-row"><label>Y軸 最大値：自動</label><div class="ctl"><input type="checkbox" id="yMaxAuto" checked></div></div>
         <div class="field-row"><label>　最大値を指定</label><div class="ctl"><input type="number" id="yMaxManual" value="10" step="0.1" disabled></div></div>
-        <p class="hint">「自動」のチェックを外すと、右の数値でY軸の範囲（スケール）を固定できます。</p>
+        <div class="field-row"><label>　0〜最大値の分割数</label><div class="ctl"><input type="number" id="yTickCount" min="2" max="20" step="1" value="5"></div></div>
+        <p class="hint">「自動」のチェックを外すと、右の数値でY軸の範囲（スケール）を固定できます。分割数はY軸目盛を0から最大値まで何段に区切るかの指定です（自動・手動どちらでも有効）。</p>
         <div class="field-row"><label>週目盛の間隔</label><div class="ctl"><input type="number" id="weekTick" min="1" max="13" value="4"></div></div>
       </div>
     </details>
@@ -400,9 +402,10 @@ const state = {
   layout: 'individual',   // 'individual' | 'overlay'
   seriesStyle: {},        // key -> {lineColor,pointColor,lineWidth,pointSize,visible}
   axis: {
-    showXAxis:true, xAxisColor:'#6b6558', xAxisWidth:1,
-    showYAxis:true, yAxisColor:'#6b6558', yAxisWidth:1,
-    showGrid:true, gridColor:'#e2dac2',
+    showXAxis:true, xAxisColor:'#000000', xAxisWidth:2,
+    showYAxis:true, yAxisColor:'#000000', yAxisWidth:2,
+    showGridX:true, showGridY:true, gridColor:'#e2dac2',
+    yTickCount:5,
     yMinAuto:true, yMinManual:0,
     yMaxAuto:true, yMaxManual:10,
     weekTick:4,
@@ -918,8 +921,9 @@ function buildChartSVG(cfg, opts){
   }
 
   // --- グリッド線 & Y軸目盛 ---
-  const yTicks = niceTicks(yDomain[0], yDomain[1], 5);
-  if(ax.showGrid){
+  const yTickCount = Math.max(1, Math.round(ax.yTickCount) || 5);
+  const yTicks = niceTicks(yDomain[0], yDomain[1], yTickCount);
+  if(ax.showGridY){
     yTicks.forEach(t=>{
       const yy = sy(t);
       svg += `<line x1="${plotX0}" y1="${yy}" x2="${plotX1}" y2="${yy}" stroke="${ax.gridColor}" stroke-width="1"/>`;
@@ -941,7 +945,7 @@ function buildChartSVG(cfg, opts){
       if(ax.showTickLabels && ax.showXAxis){
         svg += `<text x="${xx}" y="${plotY1+axisFont+8}" font-size="${axisFont}" fill="${ax.textColor}" text-anchor="middle">${w}</text>`;
       }
-      if(ax.showGrid){
+      if(ax.showGridX){
         svg += `<line x1="${xx}" y1="${plotY0}" x2="${xx}" y2="${plotY1}" stroke="${ax.gridColor}" stroke-width="0.6"/>`;
       }
     }
@@ -952,7 +956,9 @@ function buildChartSVG(cfg, opts){
       if(ax.showTickLabels && ax.showXAxis){
         svg += `<text x="${xx}" y="${plotY1+axisFont+8}" font-size="${axisFont}" fill="${ax.textColor}" text-anchor="middle">${y}</text>`;
       }
-      svg += `<line x1="${xx}" y1="${plotY0}" x2="${xx}" y2="${plotY1}" stroke="${ax.gridColor}" stroke-width="${yi===0?0:0.8}"/>`;
+      if(ax.showGridX && yi !== 0){
+        svg += `<line x1="${xx}" y1="${plotY0}" x2="${xx}" y2="${plotY1}" stroke="${ax.gridColor}" stroke-width="0.8"/>`;
+      }
     });
   }
 
@@ -1195,10 +1201,12 @@ bindNumber('xAxisWidth','xAxisWidth');
 bindCheckbox('showYAxis','showYAxis');
 bindColor('yAxisColor','yAxisColor');
 bindNumber('yAxisWidth','yAxisWidth');
-bindCheckbox('showGrid','showGrid');
+bindCheckbox('showGridX','showGridX');
+bindCheckbox('showGridY','showGridY');
 bindColor('gridColor','gridColor');
 bindAutoToggle('yMinAuto','yMinManual','yMinAuto','yMinManual');
 bindAutoToggle('yMaxAuto','yMaxManual','yMaxAuto','yMaxManual');
+bindNumber('yTickCount','yTickCount');
 bindNumber('weekTick','weekTick');
 
 bindColor('textColor','textColor');
