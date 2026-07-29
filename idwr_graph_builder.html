@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>感染症サーベイランス 週別推移グラフビルダー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Antique&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-page:#f5f1e8;
+  --bg-panel:#fdfaf3;
+  --bg-panel-alt:#f2ece0;
+  --bg-input:#ffffff;
+  --ink:#2b2822;
+  --ink-soft:#6b6558;
+  --ink-faint:#9a9384;
+  --border:#ddd4bf;
+  --border-strong:#c9bfa5;
+  --accent:#2a4d69;
+  --accent-vermillion:#c1440e;
+  --accent-moss:#5f7a3d;
+  --accent-ochre:#c98a2b;
+  --shadow:0 1px 3px rgba(43,40,34,.10);
+  --shadow-lg:0 4px 16px rgba(43,40,34,.12);
+  --radius:7px;
+  --font-display:'Zen Antique','Noto Serif JP',serif;
+  --font-body:'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg-page);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:14px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.app{
+  display:flex;
+  min-height:100vh;
+  align-items:stretch;
+}
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:328px;
+  min-width:328px;
+  background:var(--bg-panel);
+  border-right:1px solid var(--border);
+  padding:0 0 32px 0;
+  overflow-y:auto;
+  max-height:100vh;
+  position:sticky;
+  top:0;
+}
+.brand{
+  padding:22px 20px 16px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg, var(--bg-panel-alt), var(--bg-panel));
+}
+.brand h1{
+  font-family:var(--font-display);
+  font-size:18px;
+  margin:0 0 4px;
+  color:var(--accent);
+  letter-spacing:.02em;
+  line-height:1.4;
+}
+.brand p{
+  margin:0;
+  font-size:12px;
+  color:var(--ink-soft);
+}
+.panel{
+  border-bottom:1px solid var(--border);
+}
+.panel summary{
+  cursor:pointer;
+  padding:13px 20px;
+  font-weight:600;
+  font-size:13px;
+  color:var(--ink);
+  list-style:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  user-select:none;
+  background:var(--bg-panel);
+  transition:background .15s;
+}
+.panel summary::-webkit-details-marker{display:none;}
+.panel summary:hover{background:var(--bg-panel-alt);}
+.panel summary::after{
+  content:'▾';
+  color:var(--ink-faint);
+  font-size:11px;
+  transition:transform .15s;
+}
+.panel[open] summary::after{transform:rotate(180deg);}
+.panel-body{
+  padding:4px 20px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.field-row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.field-row label{font-size:12.5px; color:var(--ink-soft); flex:1;}
+.field-row .ctl{flex-shrink:0;}
+label.block{font-size:12px; color:var(--ink-soft); display:block; margin-bottom:3px;}
+input[type="text"], input[type="number"], select{
+  font-family:var(--font-body);
+  font-size:12.5px;
+  padding:5px 7px;
+  border:1px solid var(--border-strong);
+  border-radius:5px;
+  background:var(--bg-input);
+  color:var(--ink);
+}
+input[type="number"]{width:64px;}
+input[type="color"]{
+  width:30px; height:24px; padding:0; border:1px solid var(--border-strong);
+  border-radius:5px; background:none; cursor:pointer;
+}
+input[type="range"]{width:100%;}
+select{cursor:pointer;}
+.radio-group{display:flex; flex-direction:column; gap:6px;}
+.radio-opt{display:flex; align-items:center; gap:7px; font-size:12.5px; cursor:pointer;}
+.radio-opt input{cursor:pointer;}
+.checkbox-opt{display:flex; align-items:center; gap:7px; font-size:12.5px; cursor:pointer;}
+.btn{
+  font-family:var(--font-body);
+  font-size:12px;
+  padding:6px 12px;
+  border:1px solid var(--border-strong);
+  border-radius:5px;
+  background:var(--bg-input);
+  color:var(--ink);
+  cursor:pointer;
+  transition:background .15s, border-color .15s;
+}
+.btn:hover{background:var(--bg-panel-alt); border-color:var(--accent);}
+.btn.primary{background:var(--accent); color:#fff; border-color:var(--accent);}
+.btn.primary:hover{background:#1f3a50;}
+.btn.small{padding:4px 9px; font-size:11px;}
+.btn-row{display:flex; gap:6px; flex-wrap:wrap;}
+.upload-zone{
+  border:1.5px dashed var(--border-strong);
+  border-radius:var(--radius);
+  padding:16px 12px;
+  text-align:center;
+  background:var(--bg-panel-alt);
+  cursor:pointer;
+  transition:border-color .15s, background .15s;
+}
+.upload-zone:hover, .upload-zone.dragover{border-color:var(--accent); background:#eef2f0;}
+.upload-zone p{margin:0; font-size:12px; color:var(--ink-soft);}
+.upload-zone .icon{font-size:22px; margin-bottom:4px; color:var(--accent);}
+#fileInputReal{display:none;}
+.file-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px;}
+.file-item{
+  display:flex; align-items:center; gap:8px;
+  background:var(--bg-input); border:1px solid var(--border);
+  border-radius:6px; padding:6px 8px;
+}
+.file-item .swatch{width:14px; height:14px; border-radius:3px; flex-shrink:0; border:1px solid rgba(0,0,0,.15); cursor:pointer; padding:0;}
+.file-item .fname{flex:1; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.file-item .rm{background:none; border:none; color:var(--ink-faint); cursor:pointer; font-size:15px; line-height:1; padding:2px 4px;}
+.file-item .rm:hover{color:var(--accent-vermillion);}
+.year-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:5px 6px;}
+.year-chip{
+  font-size:11.5px; font-family:var(--font-mono);
+  display:flex; align-items:center; gap:4px;
+  padding:3px 5px; border-radius:4px; cursor:pointer;
+  border:1px solid transparent;
+}
+.year-chip:hover{background:var(--bg-panel-alt);}
+.empty-note{font-size:12px; color:var(--ink-faint); font-style:italic; padding:6px 0;}
+table.series-table{width:100%; border-collapse:collapse; font-size:11.5px;}
+table.series-table th{
+  text-align:left; font-weight:600; color:var(--ink-soft);
+  border-bottom:1px solid var(--border); padding:4px 3px; font-size:10.5px;
+}
+table.series-table td{padding:5px 3px; border-bottom:1px solid #ede7d6; vertical-align:middle;}
+table.series-table .lbl{max-width:92px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px;}
+table.series-table input[type="number"]{width:40px; padding:3px 4px; font-size:11px;}
+table.series-table input[type="color"]{width:22px; height:20px;}
+.hint{font-size:11px; color:var(--ink-faint); line-height:1.5;}
+/* ---------- Main ---------- */
+.main{
+  flex:1;
+  min-width:0;
+  padding:26px 30px 60px;
+}
+.main-header{
+  display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap;
+}
+.main-header .title-input{
+  font-family:var(--font-display);
+  font-size:21px;
+  border:none; background:none; color:var(--ink);
+  padding:2px 4px; border-bottom:1px solid transparent;
+  min-width:280px;
+}
+.main-header .title-input:hover, .main-header .title-input:focus{
+  border-bottom:1px solid var(--border-strong); outline:none;
+}
+.status-note{font-size:12px; color:var(--ink-soft);}
+.charts-container{display:flex; flex-direction:column; gap:26px;}
+.chart-card{
+  background:var(--bg-panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  box-shadow:var(--shadow);
+  padding:16px 18px 14px;
+}
+.chart-card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:10px; flex-wrap:wrap;}
+.chart-card-head h3{font-family:var(--font-display); font-size:15px; margin:0; color:var(--ink); font-weight:400;}
+.chart-svg-wrap{width:100%; overflow-x:auto;}
+.placeholder{
+  text-align:center; padding:80px 20px; color:var(--ink-faint);
+  border:1.5px dashed var(--border-strong); border-radius:10px; background:var(--bg-panel);
+}
+.placeholder .big{font-size:40px; margin-bottom:10px;}
+.placeholder p{margin:4px 0; font-size:13px;}
+.warn-banner{
+  background:#fbeee0; border:1px solid #e6c391; color:#7a4f14;
+  border-radius:6px; padding:8px 12px; font-size:12px; margin-bottom:16px;
+}
+footer.site-footer{
+  border-top:1px solid var(--border);
+  background:var(--bg-panel-alt);
+  color:var(--ink-soft);
+  font-size:11.5px;
+  line-height:1.8;
+  padding:16px 30px 22px;
+}
+footer.site-footer p{margin:0 0 4px;}
+@media (max-width:860px){
+  .app{flex-direction:column;}
+  .sidebar{width:100%; min-width:0; position:relative; max-height:none;}
+  .main{padding:20px 14px 50px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>週別推移グラフビルダー</h1>
+      <p>感染症サーベイランスCSV（定点当たり報告数）を折れ線グラフに</p>
+    </div>
+
+    <details class="panel" open>
+      <summary>① データ読み込み</summary>
+      <div class="panel-body">
+        <div class="upload-zone" id="uploadZone">
+          <div class="icon">⤒</div>
+          <p><strong>クリックまたはドラッグ＆ドロップ</strong><br>で CSV ファイルを追加（複数可）</p>
+        </div>
+        <input type="file" id="fileInputReal" accept=".csv" multiple>
+        <ul class="file-list" id="fileList"></ul>
+        <p class="hint">列: 週（1週〜52/53週）／ 行: 年（例「16年」＝2016年）。空欄はデータなし、「-」は 0 として扱います。</p>
+      </div>
+    </details>
+
+    <details class="panel" open>
+      <summary>② 表示モード</summary>
+      <div class="panel-body">
+        <label class="block">横軸</label>
+        <div class="radio-group">
+          <label class="radio-opt"><input type="radio" name="mode" value="yearly" checked> 1年（1〜52/53週）・年を重ね合わせ</label>
+          <label class="radio-opt"><input type="radio" name="mode" value="continuous"> 複数年 連続タイムライン</label>
+        </div>
+        <label class="block" style="margin-top:6px;">グラフ構成</label>
+        <div class="radio-group">
+          <label class="radio-opt"><input type="radio" name="layout" value="individual" checked> CSVごとに個別グラフ</label>
+          <label class="radio-opt"><input type="radio" name="layout" value="overlay"> 1つのグラフに重ね合わせ</label>
+        </div>
+      </div>
+    </details>
+
+    <details class="panel">
+      <summary>③ 対象年</summary>
+      <div class="panel-body">
+        <div class="btn-row">
+          <button class="btn small" id="yearAllBtn">全選択</button>
+          <button class="btn small" id="yearNoneBtn">全解除</button>
+        </div>
+        <div class="year-grid" id="yearGrid"></div>
+      </div>
+    </details>
+
+    <details class="panel">
+      <summary>④ 系列スタイル（線・点）</summary>
+      <div class="panel-body">
+        <table class="series-table" id="seriesTable">
+          <thead><tr>
+            <th>表示</th><th>系列</th><th>線色</th><th>太さ</th><th>点色</th><th>点径</th>
+          </tr></thead>
+          <tbody id="seriesTableBody"></tbody>
+        </table>
+        <p class="hint" id="seriesEmptyHint">データを読み込むと系列一覧が表示されます。</p>
+      </div>
+    </details>
+
+    <details class="panel" open>
+      <summary>⑤ 軸・グリッド設定</summary>
+      <div class="panel-body">
+        <div class="field-row"><label>X軸を表示</label><div class="ctl"><input type="checkbox" id="showXAxis" checked></div></div>
+        <div class="field-row"><label>X軸 色</label><div class="ctl"><input type="color" id="xAxisColor" value="#6b6558"></div></div>
+        <div class="field-row"><label>X軸 太さ</label><div class="ctl"><input type="number" id="xAxisWidth" min="0.5" max="5" step="0.5" value="1"></div></div>
+        <div class="field-row"><label>Y軸を表示</label><div class="ctl"><input type="checkbox" id="showYAxis" checked></div></div>
+        <div class="field-row"><label>Y軸 色</label><div class="ctl"><input type="color" id="yAxisColor" value="#6b6558"></div></div>
+        <div class="field-row"><label>Y軸 太さ</label><div class="ctl"><input type="number" id="yAxisWidth" min="0.5" max="5" step="0.5" value="1"></div></div>
+        <div class="field-row"><label>グリッド線を表示</label><div class="ctl"><input type="checkbox" id="showGrid" checked></div></div>
+        <div class="field-row"><label>グリッド線 色</label><div class="ctl"><input type="color" id="gridColor" value="#e2dac2"></div></div>
+        <div class="field-row"><label>Y軸 最小値：自動</label><div class="ctl"><input type="checkbox" id="yMinAuto" checked></div></div>
+        <div class="field-row"><label>　最小値を指定</label><div class="ctl"><input type="number" id="yMinManual" value="0" step="0.1" disabled></div></div>
+        <div class="field-row"><label>Y軸 最大値：自動</label><div class="ctl"><input type="checkbox" id="yMaxAuto" checked></div></div>
+        <div class="field-row"><label>　最大値を指定</label><div class="ctl"><input type="number" id="yMaxManual" value="10" step="0.1" disabled></div></div>
+        <p class="hint">「自動」のチェックを外すと、右の数値でY軸の範囲（スケール）を固定できます。</p>
+        <div class="field-row"><label>週目盛の間隔</label><div class="ctl"><input type="number" id="weekTick" min="1" max="13" value="4"></div></div>
+      </div>
+    </details>
+
+    <details class="panel">
+      <summary>⑥ ラベル・凡例</summary>
+      <div class="panel-body">
+        <div class="field-row"><label>文字色（全体）</label><div class="ctl"><input type="color" id="textColor" value="#2b2822"></div></div>
+        <div class="field-row"><label>軸目盛ラベルを表示</label><div class="ctl"><input type="checkbox" id="showTickLabels" checked></div></div>
+        <div class="field-row"><label>軸ラベル 文字サイズ</label><div class="ctl"><input type="number" id="axisFontSize" min="8" max="20" value="11"></div></div>
+        <div class="field-row"><label>凡例を表示</label><div class="ctl"><input type="checkbox" id="showLegend" checked></div></div>
+        <div class="field-row"><label>凡例 位置</label><div class="ctl">
+          <select id="legendPos"><option value="bottom">下</option><option value="right">右</option></select>
+        </div></div>
+        <div class="field-row"><label>凡例 文字サイズ</label><div class="ctl"><input type="number" id="legendFontSize" min="8" max="20" value="12"></div></div>
+        <div class="field-row"><label>タイトル 文字サイズ</label><div class="ctl"><input type="number" id="chartTitleFontSize" min="10" max="28" value="16"></div></div>
+        <div class="field-row"><label>背景色</label><div class="ctl"><input type="color" id="bgColor" value="#fdfaf3"></div></div>
+      </div>
+    </details>
+
+    <details class="panel">
+      <summary>⑦ グラフサイズ・書き出し</summary>
+      <div class="panel-body">
+        <div class="field-row"><label>幅 (px)</label><div class="ctl"><input type="number" id="chartWidth" min="400" max="2000" step="10" value="920"></div></div>
+        <div class="field-row"><label>高さ (px)</label><div class="ctl"><input type="number" id="chartHeight" min="240" max="1200" step="10" value="420"></div></div>
+        <div class="field-row"><label>PNGの背景を透明にする</label><div class="ctl"><input type="checkbox" id="pngTransparentBg"></div></div>
+        <p class="hint">チェックすると「PNG保存」時のみ背景色を除いた透過PNGを書き出します（画面表示・SVG保存の背景色はそのままです）。</p>
+      </div>
+    </details>
+  </aside>
+
+  <main class="main">
+    <div class="main-header">
+      <input type="text" class="title-input" id="mainTitle" value="感染症 定点当たり報告数 週別推移">
+      <span class="status-note" id="statusNote"></span>
+    </div>
+    <div id="warnArea"></div>
+    <div class="charts-container" id="chartsContainer">
+      <div class="placeholder" id="placeholder">
+        <div class="big">📈</div>
+        <p><strong>まだデータがありません</strong></p>
+        <p>左側の「① データ読み込み」から CSV ファイルを追加してください。</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>本ツールは AI（Claude, Anthropic）を用いて作成されました。内容には誤りが含まれる可能性があります。医療上の判断には必ず公式の教科書・文献・専門家の指導を参照してください。</p>
+  <p>二次利用・再配布は自己責任のもとで可能です。その際、本注記の保持を推奨します。</p>
+</footer>
+<script>
+(function(){
+"use strict";
+
+/* =========================================================
+   状態管理
+   ========================================================= */
+const PALETTE = [
+  '#2a4d69','#c1440e','#5f7a3d','#c98a2b','#6a4c93',
+  '#3f7a7a','#a13d63','#4c6a4c','#8a5a3b','#3d5a80',
+  '#9a6a2b','#5a3d6a','#7a2e2e','#2e6a5a','#6a5a2e'
+];
+let paletteCursor = 0;
+function nextPaletteColor(){
+  const c = PALETTE[paletteCursor % PALETTE.length];
+  paletteCursor++;
+  return c;
+}
+
+const state = {
+  files: [],              // {id, name, years:{yearNum:[53 vals|null]}, color}
+  fileIncluded: {},       // id -> bool
+  selectedYears: new Set(),
+  mode: 'yearly',         // 'yearly' | 'continuous'
+  layout: 'individual',   // 'individual' | 'overlay'
+  seriesStyle: {},        // key -> {lineColor,pointColor,lineWidth,pointSize,visible}
+  axis: {
+    showXAxis:true, xAxisColor:'#6b6558', xAxisWidth:1,
+    showYAxis:true, yAxisColor:'#6b6558', yAxisWidth:1,
+    showGrid:true, gridColor:'#e2dac2',
+    yMinAuto:true, yMinManual:0,
+    yMaxAuto:true, yMaxManual:10,
+    weekTick:4,
+    textColor:'#2b2822',
+    showTickLabels:true,
+    axisFontSize:11,
+    showLegend:true, legendPos:'bottom', legendFontSize:12,
+    chartTitleFontSize:16,
+    bgColor:'#fdfaf3'
+  },
+  chartSize:{width:920,height:420},
+  pngTransparentBg:false,
+  mainTitle:'感染症 定点当たり報告数 週別推移'
+};
+
+let fileIdCounter = 0;
+
+/* =========================================================
+   CSVパース
+   16年,2週 => year=2016, week=2
+   空欄 => null（データなし＝線を切る）
+   "-"  => 0
+   ========================================================= */
+function splitCSVLine(line){
+  // シンプルなCSV分割（本データはクォートを含まない想定だが、念のため簡易対応）
+  const out = [];
+  let cur = '';
+  let inQuotes = false;
+  for(let i=0;i<line.length;i++){
+    const ch = line[i];
+    if(ch === '"'){
+      if(inQuotes && line[i+1] === '"'){ cur+='"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if(ch === ',' && !inQuotes){
+      out.push(cur); cur='';
+    } else {
+      cur += ch;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
+function parseCSVText(text, filename){
+  text = text.replace(/^\uFEFF/, ''); // BOM除去
+  const lines = text.split(/\r\n|\r|\n/).filter(l => l.trim().length>0);
+  if(lines.length < 2){
+    throw new Error(`${filename}: データ行が見つかりません`);
+  }
+  const header = splitCSVLine(lines[0]);
+  // header[0] は空、header[1..] が "1週".."53週" 等
+  const weekOf = header.map(h=>{
+    const m = String(h).match(/(\d+)/);
+    return m ? parseInt(m[1],10) : null;
+  });
+  const years = {};
+  let parsedRows = 0;
+  for(let li=1; li<lines.length; li++){
+    const cols = splitCSVLine(lines[li]);
+    const rowLabel = (cols[0]||'').trim();
+    const ym = rowLabel.match(/(\d+)/);
+    if(!ym) continue;
+    let y = parseInt(ym[1],10);
+    if(y < 100) y += 2000; // "16" -> 2016
+    const arr = new Array(53).fill(null);
+    for(let c=1; c<cols.length; c++){
+      const wk = weekOf[c];
+      if(!wk || wk<1 || wk>53) continue;
+      const raw = (cols[c]||'').trim();
+      let val;
+      if(raw === '') val = null;
+      else if(raw === '-') val = 0;
+      else {
+        const num = parseFloat(raw.replace(/,/g,''));
+        val = isNaN(num) ? null : num;
+      }
+      arr[wk-1] = val;
+    }
+    years[y] = arr;
+    parsedRows++;
+  }
+  if(parsedRows === 0){
+    throw new Error(`${filename}: 年の行を認識できませんでした（例:「16年」の形式を想定）`);
+  }
+  return years;
+}
+
+/* =========================================================
+   ファイル読み込み UI
+   ========================================================= */
+const fileInputReal = document.getElementById('fileInputReal');
+const uploadZone = document.getElementById('uploadZone');
+const fileListEl = document.getElementById('fileList');
+const warnArea = document.getElementById('warnArea');
+
+uploadZone.addEventListener('click', ()=> fileInputReal.click());
+uploadZone.addEventListener('dragover', e=>{ e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', ()=> uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e=>{
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+fileInputReal.addEventListener('change', e=>{
+  handleFiles(e.target.files);
+  fileInputReal.value = '';
+});
+
+function showWarning(msg){
+  const div = document.createElement('div');
+  div.className = 'warn-banner';
+  div.textContent = msg;
+  warnArea.appendChild(div);
+  setTimeout(()=>{ div.remove(); }, 8000);
+}
+
+function handleFiles(fileListObj){
+  const arr = Array.from(fileListObj || []).filter(f => /\.csv$/i.test(f.name));
+  if(arr.length === 0) return;
+  let remaining = arr.length;
+  arr.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = evt => {
+      try{
+        const years = parseCSVText(evt.target.result, file.name);
+        addFile(file.name.replace(/\.csv$/i,''), years);
+      } catch(err){
+        showWarning('読み込みエラー: ' + err.message);
+      } finally {
+        remaining--;
+        if(remaining === 0) fullRender();
+      }
+    };
+    reader.onerror = ()=>{
+      showWarning(`${file.name}: ファイルを読み込めませんでした`);
+      remaining--;
+      if(remaining === 0) fullRender();
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
+function addFile(name, years){
+  const id = 'f' + (++fileIdCounter);
+  const color = nextPaletteColor();
+  state.files.push({id, name, years, color});
+  state.fileIncluded[id] = true;
+  Object.keys(years).forEach(y=> state.selectedYears.add(parseInt(y,10)));
+}
+
+function removeFile(id){
+  state.files = state.files.filter(f=>f.id!==id);
+  delete state.fileIncluded[id];
+  // 系列スタイルの掃除（該当ファイルのキーを削除）
+  Object.keys(state.seriesStyle).forEach(k=>{
+    if(k.startsWith(id+':')) delete state.seriesStyle[k];
+  });
+  fullRender();
+}
+
+function renderFileList(){
+  fileListEl.innerHTML = '';
+  state.files.forEach(f=>{
+    const li = document.createElement('li');
+    li.className = 'file-item';
+    const swatch = document.createElement('input');
+    swatch.type = 'color';
+    swatch.className = 'swatch';
+    swatch.value = f.color;
+    swatch.title = '既定の色（連続モード等で使用）';
+    swatch.addEventListener('input', ()=>{ f.color = swatch.value; renderCharts(); });
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.checked = !!state.fileIncluded[f.id];
+    chk.title = 'このグラフに含める';
+    chk.addEventListener('change', ()=>{ state.fileIncluded[f.id] = chk.checked; fullRender(); });
+    const name = document.createElement('span');
+    name.className = 'fname';
+    name.textContent = f.name;
+    name.title = f.name;
+    const rm = document.createElement('button');
+    rm.className = 'rm';
+    rm.textContent = '×';
+    rm.title = '削除';
+    rm.addEventListener('click', ()=> removeFile(f.id));
+    li.appendChild(chk);
+    li.appendChild(swatch);
+    li.appendChild(name);
+    li.appendChild(rm);
+    fileListEl.appendChild(li);
+  });
+}
+
+/* =========================================================
+   年選択 UI
+   ========================================================= */
+const yearGrid = document.getElementById('yearGrid');
+document.getElementById('yearAllBtn').addEventListener('click', ()=>{
+  getAllYears().forEach(y=> state.selectedYears.add(y));
+  fullRender();
+});
+document.getElementById('yearNoneBtn').addEventListener('click', ()=>{
+  state.selectedYears.clear();
+  fullRender();
+});
+
+function getAllYears(){
+  const set = new Set();
+  state.files.forEach(f=> Object.keys(f.years).forEach(y=> set.add(parseInt(y,10))));
+  return Array.from(set).sort((a,b)=>a-b);
+}
+
+function renderYearGrid(){
+  const years = getAllYears();
+  yearGrid.innerHTML = '';
+  if(years.length===0){
+    yearGrid.innerHTML = '<p class="empty-note">データ読み込み後に表示されます</p>';
+    return;
+  }
+  years.forEach(y=>{
+    const label = document.createElement('label');
+    label.className = 'year-chip';
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.checked = state.selectedYears.has(y);
+    chk.addEventListener('change', ()=>{
+      if(chk.checked) state.selectedYears.add(y); else state.selectedYears.delete(y);
+      fullRender();
+    });
+    label.appendChild(chk);
+    label.appendChild(document.createTextNode(y+'年'));
+    yearGrid.appendChild(label);
+  });
+}
+
+/* =========================================================
+   系列（series）構築
+   yearly    : {fileId, year} ごとに1系列, x = 1..53(週)
+   continuous: {fileId}       ごとに1系列, x = 通し週インデックス
+   ========================================================= */
+function formatYW(year, week){
+  return year + '.' + String(week).padStart(2,'0');
+}
+
+/* =========================================================
+   年ごとの週数（52週 or 53週）判定
+   読み込んだ全CSVを横断して、いずれかのファイルで53週に値が
+   存在すればその年は53週、どのファイルにも53週の値がなければ
+   52週の年とみなす（連続モードで52週→翌年1週を直結するため）
+   ========================================================= */
+function yearHasWeek53(y){
+  return state.files.some(f => f.years[y] && f.years[y][52] != null);
+}
+function weeksInYear(y){
+  return yearHasWeek53(y) ? 53 : 52;
+}
+function buildYearOffsets(years){
+  let offset = 0;
+  const map = {};
+  years.forEach(y=>{
+    map[y] = offset;
+    offset += weeksInYear(y);
+  });
+  return {map, total: offset};
+}
+
+function buildSeriesList(){
+  const list = [];
+  const includedFiles = state.files.filter(f => state.fileIncluded[f.id]);
+  const years = Array.from(state.selectedYears).sort((a,b)=>a-b);
+
+  if(state.mode === 'yearly'){
+    includedFiles.forEach(f=>{
+      years.forEach(y=>{
+        if(!f.years[y]) return;
+        const arr = f.years[y];
+        const points = arr.map((v,i)=>({x:i+1, week:i+1, year:y, y:v, xlabel:formatYW(y,i+1)}));
+        list.push({
+          key: f.id+':'+y,
+          fileId: f.id,
+          year: y,
+          label: f.name + ' ' + y + '年',
+          points
+        });
+      });
+    });
+  } else { // continuous
+    const yearOffsets = buildYearOffsets(years);
+    includedFiles.forEach(f=>{
+      const points = [];
+      years.forEach(y=>{
+        const arr = f.years[y] || null;
+        const wCount = weeksInYear(y);
+        const base = yearOffsets.map[y];
+        for(let w=0; w<wCount; w++){
+          points.push({
+            x: base + w,
+            week: w+1,
+            year: y,
+            y: arr ? arr[w] : null,
+            xlabel: formatYW(y, w+1)
+          });
+        }
+      });
+      list.push({
+        key: f.id+':all',
+        fileId: f.id,
+        year: null,
+        label: f.name,
+        points
+      });
+    });
+  }
+  return list;
+}
+
+function styleFor(key, fallbackColor){
+  if(!state.seriesStyle[key]){
+    const c = fallbackColor || nextPaletteColor();
+    // 連続（複数年）モードの系列は点数が非常に多くなるため、既定では点を非表示にし線のみで見やすくする
+    const isContinuous = key.endsWith(':all');
+    state.seriesStyle[key] = {
+      lineColor: c,
+      pointColor: c,
+      lineWidth: 2,
+      pointSize: isContinuous ? 0 : 3,
+      visible: true
+    };
+  }
+  return state.seriesStyle[key];
+}
+
+function ensureSeriesStyles(seriesList){
+  seriesList.forEach(s=>{
+    const fallback = state.mode === 'continuous'
+      ? (state.files.find(f=>f.id===s.fileId)||{}).color
+      : null;
+    styleFor(s.key, fallback);
+  });
+}
+
+/* =========================================================
+   系列スタイル テーブル UI
+   ========================================================= */
+const seriesTableBody = document.getElementById('seriesTableBody');
+const seriesEmptyHint = document.getElementById('seriesEmptyHint');
+
+function renderSeriesTable(seriesList){
+  seriesTableBody.innerHTML = '';
+  if(seriesList.length === 0){
+    seriesEmptyHint.style.display = 'block';
+    return;
+  }
+  seriesEmptyHint.style.display = 'none';
+  seriesList.forEach(s=>{
+    const st = styleFor(s.key);
+    const tr = document.createElement('tr');
+
+    const tdVis = document.createElement('td');
+    const chkVis = document.createElement('input');
+    chkVis.type = 'checkbox';
+    chkVis.checked = st.visible;
+    chkVis.addEventListener('change', ()=>{ st.visible = chkVis.checked; renderChartsOnly(); });
+    tdVis.appendChild(chkVis);
+
+    const tdLbl = document.createElement('td');
+    tdLbl.className = 'lbl';
+    tdLbl.textContent = s.label;
+    tdLbl.title = s.label;
+
+    const tdLineColor = document.createElement('td');
+    const inLineColor = document.createElement('input');
+    inLineColor.type = 'color'; inLineColor.value = st.lineColor;
+    inLineColor.addEventListener('input', ()=>{ st.lineColor = inLineColor.value; renderChartsOnly(); });
+    tdLineColor.appendChild(inLineColor);
+
+    const tdLineWidth = document.createElement('td');
+    const inLineWidth = document.createElement('input');
+    inLineWidth.type = 'number'; inLineWidth.min='0.5'; inLineWidth.max='8'; inLineWidth.step='0.5';
+    inLineWidth.value = st.lineWidth;
+    inLineWidth.addEventListener('input', ()=>{ st.lineWidth = parseFloat(inLineWidth.value)||0; renderChartsOnly(); });
+    tdLineWidth.appendChild(inLineWidth);
+
+    const tdPointColor = document.createElement('td');
+    const inPointColor = document.createElement('input');
+    inPointColor.type = 'color'; inPointColor.value = st.pointColor;
+    inPointColor.addEventListener('input', ()=>{ st.pointColor = inPointColor.value; renderChartsOnly(); });
+    tdPointColor.appendChild(inPointColor);
+
+    const tdPointSize = document.createElement('td');
+    const inPointSize = document.createElement('input');
+    inPointSize.type = 'number'; inPointSize.min='0'; inPointSize.max='10'; inPointSize.step='0.5';
+    inPointSize.value = st.pointSize;
+    inPointSize.addEventListener('input', ()=>{ st.pointSize = parseFloat(inPointSize.value)||0; renderChartsOnly(); });
+    tdPointSize.appendChild(inPointSize);
+
+    tr.appendChild(tdVis);
+    tr.appendChild(tdLbl);
+    tr.appendChild(tdLineColor);
+    tr.appendChild(tdLineWidth);
+    tr.appendChild(tdPointColor);
+    tr.appendChild(tdPointSize);
+    seriesTableBody.appendChild(tr);
+  });
+}
+
+/* =========================================================
+   グラフ（SVG）構築
+   ========================================================= */
+function escapeXML(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function groupSeriesForLayout(seriesList){
+  if(state.layout === 'overlay'){
+    return [{ id:'overlay', title: state.mainTitle, series: seriesList }];
+  }
+  const groups = [];
+  state.files.forEach(f=>{
+    if(!state.fileIncluded[f.id]) return;
+    const subset = seriesList.filter(s=>s.fileId===f.id);
+    if(subset.length) groups.push({ id:f.id, title: f.name, series: subset });
+  });
+  return groups;
+}
+
+function computeYDomain(seriesList){
+  let min = Infinity, max = -Infinity;
+  seriesList.forEach(s=>{
+    const st = styleFor(s.key);
+    if(!st.visible) return;
+    s.points.forEach(p=>{
+      if(p.y != null){
+        if(p.y < min) min = p.y;
+        if(p.y > max) max = p.y;
+      }
+    });
+  });
+  if(min === Infinity){ min = 0; max = 1; }
+  let yMin = state.axis.yMinAuto ? Math.min(0, min) : state.axis.yMinManual;
+  let yMax = state.axis.yMaxAuto ? (max <= 0 ? 1 : max * 1.1) : state.axis.yMaxManual;
+  if(yMax <= yMin) yMax = yMin + 1;
+  return [yMin, yMax];
+}
+
+function niceTicks(min, max, count){
+  const step = (max - min) / count;
+  const ticks = [];
+  for(let i=0;i<=count;i++) ticks.push(min + step*i);
+  return ticks;
+}
+
+function computeXDomain(mode, years){
+  if(mode === 'yearly') return [1, 53];
+  const {total} = buildYearOffsets(years);
+  return [0, Math.max(total - 1, 1)];
+}
+
+function estimateLegendRows(seriesList, fontSize, availWidth){
+  const visible = seriesList.filter(s => styleFor(s.key).visible);
+  const rows = []; let row = []; let w = 0;
+  visible.forEach(s=>{
+    const itemW = s.label.length*(fontSize*0.62) + 34;
+    if(w + itemW > availWidth && row.length){ rows.push(row); row = []; w = 0; }
+    row.push(s); w += itemW + 14;
+  });
+  if(row.length) rows.push(row);
+  return rows;
+}
+
+function buildChartSVG(cfg, opts){
+  opts = opts || {};
+  const ax = state.axis;
+  const W = state.chartSize.width;
+  const H = state.chartSize.height;
+  const years = Array.from(state.selectedYears).sort((a,b)=>a-b);
+  const xDomain = computeXDomain(state.mode, years);
+  const visibleSeries = cfg.series.filter(s => styleFor(s.key).visible);
+  const yDomain = computeYDomain(cfg.series);
+
+  const legendFont = ax.legendFontSize;
+  const axisFont = ax.axisFontSize;
+  const legendOnRight = ax.showLegend && ax.legendPos === 'right';
+  const legendOnBottom = ax.showLegend && ax.legendPos === 'bottom';
+
+  let padLeft = ax.showYAxis && ax.showTickLabels ? 54 : 22;
+  let padRight = 22;
+  let padTop = 14;
+  let padBottom = (ax.showXAxis && ax.showTickLabels) ? 34 : 16;
+
+  let legendRows = [];
+  let legendColW = 0;
+  if(legendOnBottom){
+    legendRows = estimateLegendRows(cfg.series, legendFont, W - padLeft - padRight);
+    padBottom += legendRows.length * (legendFont + 12) + 10;
+  }
+  if(legendOnRight){
+    const visible = cfg.series.filter(s=>styleFor(s.key).visible);
+    legendColW = Math.min(220, Math.max(90, Math.max(0,...visible.map(s=>s.label.length))*(legendFont*0.62) + 34));
+    padRight += legendColW;
+  }
+
+  const plotX0 = padLeft, plotX1 = W - padRight;
+  const plotY0 = padTop,  plotY1 = H - padBottom;
+
+  function sx(x){ return plotX0 + (x - xDomain[0])/(xDomain[1]-xDomain[0]) * (plotX1-plotX0); }
+  function sy(y){ return plotY1 - (y - yDomain[0])/(yDomain[1]-yDomain[0]) * (plotY1-plotY0); }
+
+  let svg = '';
+  svg += `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="'Noto Sans JP','Hiragino Sans',sans-serif">`;
+  if(!opts.transparentBg){
+    svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${ax.bgColor}"/>`;
+  }
+
+  // --- グリッド線 & Y軸目盛 ---
+  const yTicks = niceTicks(yDomain[0], yDomain[1], 5);
+  if(ax.showGrid){
+    yTicks.forEach(t=>{
+      const yy = sy(t);
+      svg += `<line x1="${plotX0}" y1="${yy}" x2="${plotX1}" y2="${yy}" stroke="${ax.gridColor}" stroke-width="1"/>`;
+    });
+  }
+  if(ax.showYAxis && ax.showTickLabels){
+    yTicks.forEach(t=>{
+      const yy = sy(t);
+      const label = Math.abs(t) < 0.005 ? '0' : (Math.round(t*100)/100).toString();
+      svg += `<text x="${plotX0-8}" y="${yy+axisFont*0.35}" font-size="${axisFont}" fill="${ax.textColor}" text-anchor="end">${escapeXML(label)}</text>`;
+    });
+  }
+
+  // --- X軸目盛 & 縦グリッド（区切り） ---
+  if(state.mode === 'yearly'){
+    const step = Math.max(1, ax.weekTick);
+    for(let w=1; w<=xDomain[1]; w+=step){
+      const xx = sx(w);
+      if(ax.showTickLabels && ax.showXAxis){
+        svg += `<text x="${xx}" y="${plotY1+axisFont+8}" font-size="${axisFont}" fill="${ax.textColor}" text-anchor="middle">${w}</text>`;
+      }
+      if(ax.showGrid){
+        svg += `<line x1="${xx}" y1="${plotY0}" x2="${xx}" y2="${plotY1}" stroke="${ax.gridColor}" stroke-width="0.6"/>`;
+      }
+    }
+  } else {
+    const yearOffsets = buildYearOffsets(years);
+    years.forEach((y, yi)=>{
+      const xx = sx(yearOffsets.map[y]);
+      if(ax.showTickLabels && ax.showXAxis){
+        svg += `<text x="${xx}" y="${plotY1+axisFont+8}" font-size="${axisFont}" fill="${ax.textColor}" text-anchor="middle">${y}</text>`;
+      }
+      svg += `<line x1="${xx}" y1="${plotY0}" x2="${xx}" y2="${plotY1}" stroke="${ax.gridColor}" stroke-width="${yi===0?0:0.8}"/>`;
+    });
+  }
+
+  // --- 軸線 ---
+  if(ax.showXAxis){
+    svg += `<line x1="${plotX0}" y1="${plotY1}" x2="${plotX1}" y2="${plotY1}" stroke="${ax.xAxisColor}" stroke-width="${ax.xAxisWidth}"/>`;
+  }
+  if(ax.showYAxis){
+    svg += `<line x1="${plotX0}" y1="${plotY0}" x2="${plotX0}" y2="${plotY1}" stroke="${ax.yAxisColor}" stroke-width="${ax.yAxisWidth}"/>`;
+  }
+
+  // --- データ系列（欠損部分で線を分割） ---
+  visibleSeries.forEach(s=>{
+    const st = styleFor(s.key);
+    let runs = [];
+    let cur = [];
+    s.points.forEach(p=>{
+      if(p.y == null){
+        if(cur.length) runs.push(cur);
+        cur = [];
+      } else {
+        cur.push(p);
+      }
+    });
+    if(cur.length) runs.push(cur);
+
+    runs.forEach(run=>{
+      if(st.lineWidth > 0 && run.length >= 2){
+        const d = run.map((p,i)=> (i===0?'M':'L') + sx(p.x).toFixed(2) + ',' + sy(p.y).toFixed(2)).join(' ');
+        svg += `<path d="${d}" fill="none" stroke="${st.lineColor}" stroke-width="${st.lineWidth}" stroke-linejoin="round" stroke-linecap="round"/>`;
+      } else if(st.lineWidth > 0 && run.length === 1 && st.pointSize === 0){
+        // 孤立した1点のみのデータ（前後が欠損）は、点非表示設定でも消えてしまわないよう
+        // 最小限のマーカーを描画する
+        const p = run[0];
+        const r = Math.max(2, st.lineWidth + 0.5);
+        svg += `<circle cx="${sx(p.x).toFixed(2)}" cy="${sy(p.y).toFixed(2)}" r="${r}" fill="${st.lineColor}"><title>${escapeXML(s.label)} ${escapeXML(p.xlabel)} : ${p.y}</title></circle>`;
+      }
+    });
+
+    if(st.pointSize > 0){
+      s.points.forEach(p=>{
+        if(p.y == null) return;
+        svg += `<circle cx="${sx(p.x).toFixed(2)}" cy="${sy(p.y).toFixed(2)}" r="${st.pointSize}" fill="${st.pointColor}"><title>${escapeXML(s.label)} ${escapeXML(p.xlabel)} : ${p.y}</title></circle>`;
+      });
+    }
+  });
+
+  // --- 凡例 ---
+  if(ax.showLegend){
+    if(legendOnBottom && legendRows.length){
+      let ly = plotY1 + ((ax.showXAxis && ax.showTickLabels) ? 34 : 16) + legendFont;
+      legendRows.forEach(row=>{
+        let lx = plotX0;
+        row.forEach(s=>{
+          const st = styleFor(s.key);
+          svg += `<rect x="${lx}" y="${ly-legendFont*0.8}" width="${legendFont}" height="${legendFont*0.55}" fill="${st.lineColor}"/>`;
+          svg += `<text x="${lx+legendFont+5}" y="${ly}" font-size="${legendFont}" fill="${ax.textColor}">${escapeXML(s.label)}</text>`;
+          lx += s.label.length*(legendFont*0.62) + 34;
+        });
+        ly += legendFont + 12;
+      });
+    } else if(legendOnRight){
+      let ly = plotY0 + legendFont;
+      const lx = plotX1 + 16;
+      cfg.series.forEach(s=>{
+        const st = styleFor(s.key);
+        if(!st.visible) return;
+        svg += `<rect x="${lx}" y="${ly-legendFont*0.8}" width="${legendFont}" height="${legendFont*0.55}" fill="${st.lineColor}"/>`;
+        svg += `<text x="${lx+legendFont+5}" y="${ly}" font-size="${legendFont}" fill="${ax.textColor}">${escapeXML(s.label)}</text>`;
+        ly += legendFont + 10;
+      });
+    }
+  }
+
+  svg += `</svg>`;
+  return svg;
+}
+
+/* =========================================================
+   チャートカード描画 & エクスポート
+   ========================================================= */
+const chartsContainer = document.getElementById('chartsContainer');
+const placeholder = document.getElementById('placeholder');
+const statusNote = document.getElementById('statusNote');
+
+function triggerDownload(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=> URL.revokeObjectURL(url), 2000);
+}
+
+function downloadSVGString(svgString, filename){
+  const blob = new Blob([svgString], {type:'image/svg+xml;charset=utf-8'});
+  triggerDownload(blob, filename);
+}
+
+function downloadPNGFromSVG(svgString, filename){
+  const svgBlob = new Blob([svgString], {type:'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  img.onload = ()=>{
+    const scale = 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = state.chartSize.width * scale;
+    canvas.height = state.chartSize.height * scale;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.drawImage(img, 0, 0, state.chartSize.width, state.chartSize.height);
+    canvas.toBlob(blob=>{
+      triggerDownload(blob, filename);
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  };
+  img.onerror = ()=>{ showWarning('PNG変換に失敗しました。SVGダウンロードをお試しください。'); URL.revokeObjectURL(url); };
+  img.src = url;
+}
+
+function renderChartCards(seriesList){
+  chartsContainer.innerHTML = '';
+
+  if(state.files.length === 0){
+    chartsContainer.appendChild(placeholder);
+    statusNote.textContent = '';
+    return;
+  }
+  if(seriesList.length === 0){
+    const p = document.createElement('div');
+    p.className = 'placeholder';
+    p.innerHTML = '<div class="big">🗂️</div><p><strong>表示対象がありません</strong></p><p>「② 表示モード」でCSVを含める設定、または「③ 対象年」の選択をご確認ください。</p>';
+    chartsContainer.appendChild(p);
+    statusNote.textContent = '';
+    return;
+  }
+
+  const groups = groupSeriesForLayout(seriesList);
+  const modeLabel = state.mode === 'yearly' ? '1年（週別・年重ね合わせ）' : '複数年連続タイムライン';
+  const layoutLabel = state.layout === 'individual' ? 'CSVごと個別' : '重ね合わせ';
+  statusNote.textContent = `モード: ${modeLabel} / 構成: ${layoutLabel} / 系列数: ${seriesList.filter(s=>styleFor(s.key).visible).length}`;
+
+  groups.forEach((g, gi)=>{
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+
+    const head = document.createElement('div');
+    head.className = 'chart-card-head';
+    const h3 = document.createElement('h3');
+    h3.style.fontSize = state.axis.chartTitleFontSize + 'px';
+    h3.style.color = state.axis.textColor;
+    const titleText = state.layout === 'overlay' ? state.mainTitle : (state.mainTitle + ' － ' + g.title);
+    h3.textContent = titleText;
+    const btnRow = document.createElement('div');
+    btnRow.className = 'btn-row';
+    const btnSVG = document.createElement('button');
+    btnSVG.className = 'btn small'; btnSVG.textContent = 'SVG保存';
+    const btnPNG = document.createElement('button');
+    btnPNG.className = 'btn small'; btnPNG.textContent = 'PNG保存';
+    btnRow.appendChild(btnSVG); btnRow.appendChild(btnPNG);
+    head.appendChild(h3); head.appendChild(btnRow);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'chart-svg-wrap';
+    const svgString = buildChartSVG(g);
+    wrap.innerHTML = svgString;
+
+    const safeName = titleText.replace(/[\\/:*?"<>|]/g,'_');
+    btnSVG.addEventListener('click', ()=> downloadSVGString(svgString, safeName + '.svg'));
+    btnPNG.addEventListener('click', ()=>{
+      const svgForPng = state.pngTransparentBg ? buildChartSVG(g, {transparentBg:true}) : svgString;
+      downloadPNGFromSVG(svgForPng, safeName + '.png');
+    });
+
+    card.appendChild(head);
+    card.appendChild(wrap);
+    chartsContainer.appendChild(card);
+  });
+}
+
+// スタイル（色・太さ・点径・表示切替）だけが変わったときはグラフだけを再描画する。
+// 系列テーブルのDOMを毎回作り直すと、色ピッカー操作中に入力欄ごと消えてしまい
+// 「色を変えようとするとすぐ閉じる」原因になるため、テーブルはそのまま保持する。
+function renderChartsOnly(){
+  const seriesList = buildSeriesList();
+  ensureSeriesStyles(seriesList);
+  renderChartCards(seriesList);
+}
+
+function renderCharts(){
+  const seriesList = buildSeriesList();
+  ensureSeriesStyles(seriesList);
+  renderSeriesTable(seriesList);
+  renderChartCards(seriesList);
+}
+
+function fullRender(){
+  renderFileList();
+  renderYearGrid();
+  renderCharts();
+}
+
+/* =========================================================
+   サイドバー コントロールのバインド
+   ========================================================= */
+document.querySelectorAll('input[name="mode"]').forEach(el=>{
+  el.addEventListener('change', ()=>{ if(el.checked){ state.mode = el.value; renderCharts(); } });
+});
+document.querySelectorAll('input[name="layout"]').forEach(el=>{
+  el.addEventListener('change', ()=>{ if(el.checked){ state.layout = el.value; renderCharts(); } });
+});
+
+function bindCheckbox(id, key){
+  document.getElementById(id).addEventListener('change', e=>{ state.axis[key] = e.target.checked; renderCharts(); });
+}
+function bindColor(id, key){
+  document.getElementById(id).addEventListener('input', e=>{ state.axis[key] = e.target.value; renderCharts(); });
+}
+function bindNumber(id, key){
+  document.getElementById(id).addEventListener('input', e=>{ state.axis[key] = parseFloat(e.target.value)||0; renderCharts(); });
+}
+// 「自動」チェックボックスと連動して、手動入力欄の有効/無効を切り替える
+function bindAutoToggle(autoId, manualId, autoKey, manualKey){
+  const autoEl = document.getElementById(autoId);
+  const manualEl = document.getElementById(manualId);
+  autoEl.addEventListener('change', ()=>{
+    state.axis[autoKey] = autoEl.checked;
+    manualEl.disabled = autoEl.checked;
+    if(!autoEl.checked) manualEl.focus();
+    renderCharts();
+  });
+  manualEl.addEventListener('input', ()=>{
+    state.axis[manualKey] = parseFloat(manualEl.value) || 0;
+    renderCharts();
+  });
+}
+
+bindCheckbox('showXAxis','showXAxis');
+bindColor('xAxisColor','xAxisColor');
+bindNumber('xAxisWidth','xAxisWidth');
+bindCheckbox('showYAxis','showYAxis');
+bindColor('yAxisColor','yAxisColor');
+bindNumber('yAxisWidth','yAxisWidth');
+bindCheckbox('showGrid','showGrid');
+bindColor('gridColor','gridColor');
+bindAutoToggle('yMinAuto','yMinManual','yMinAuto','yMinManual');
+bindAutoToggle('yMaxAuto','yMaxManual','yMaxAuto','yMaxManual');
+bindNumber('weekTick','weekTick');
+
+bindColor('textColor','textColor');
+bindCheckbox('showTickLabels','showTickLabels');
+bindNumber('axisFontSize','axisFontSize');
+bindCheckbox('showLegend','showLegend');
+document.getElementById('legendPos').addEventListener('change', e=>{ state.axis.legendPos = e.target.value; renderCharts(); });
+bindNumber('legendFontSize','legendFontSize');
+bindNumber('chartTitleFontSize','chartTitleFontSize');
+bindColor('bgColor','bgColor');
+
+document.getElementById('chartWidth').addEventListener('input', e=>{ state.chartSize.width = parseInt(e.target.value)||920; renderCharts(); });
+document.getElementById('chartHeight').addEventListener('input', e=>{ state.chartSize.height = parseInt(e.target.value)||420; renderCharts(); });
+document.getElementById('pngTransparentBg').addEventListener('change', e=>{ state.pngTransparentBg = e.target.checked; });
+
+document.getElementById('mainTitle').addEventListener('input', e=>{ state.mainTitle = e.target.value; renderCharts(); });
+
+/* 初期表示 */
+fullRender();
+
+})();
+</script>
+</body>
+</html>
